@@ -33,3 +33,6 @@ map_theme = function(){
       legend.key.width=grid::unit(1.5,"cm")
     )
 }
+
+
+continuous_color = c("#d3f2a3","#97e196","#6cc08b","#4c9b82","#217a79","#105965","#074050")

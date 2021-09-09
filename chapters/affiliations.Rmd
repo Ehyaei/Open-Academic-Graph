@@ -48,7 +48,7 @@ ggplot(aff_country_count_heatmap, aes(long, lat)) +
 	geom_polygon(aes(group=group,fill = Frequency),colour="white",size=0.1) +
 	coord_equal() + 
   # https://carto.com/carto-colors/
-  scale_fill_gradientn(colours = c("#d3f2a3","#97e196","#6cc08b","#4c9b82","#217a79","#105965","#074050"),
+  scale_fill_gradientn(colours = continuous_color,
                        breaks = c(1,5,20,100,500,2000,8000),
                        trans = "log",na.value = "grey90")+
   map_theme()
@@ -62,7 +62,18 @@ p = ggplot() +
                  aes(Longitude, Latitude),size = 0.1,color = "#5B8F22") +
 	coord_equal() +
 	  theme_void()
-ggsave("../transparent.pdf", p,device = "pdf", bg = "transparent")
 p
 ```
+
+
+```{r add_location_germany_contour_map,fig.cap="The location of academic organizations in Germany."}
+aff_DEU = aff %>% filter(country == "Germany")
+ggplot()+
+  geom_hex(data = aff_DEU, aes(x = Longitude, y = Latitude),bins = 10,alpha = 0.5) +
+  geom_sf(data = germany,fill = "transparent",size = 0.1, color = "gray")+
+  scale_fill_gradientn(colours = continuous_color) +
+  scale_alpha(range = c(0, 0.5), guide = FALSE)+
+  map_theme()
+```
+
 
