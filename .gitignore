@@ -44,3 +44,10 @@ raw-data/
 
 # Tex file
 *.tex
+
+# jupyter check-point
+manuscript/.ipynb_checkpoints
+
+# figures
+
+figure/

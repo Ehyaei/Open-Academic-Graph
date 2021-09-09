@@ -1,0 +1,68 @@
+# Affiliations
+
+```{r read_data}
+aff = readr::read_rds("../data/affiliation.rds")
+world = readr::read_rds("../data/maps/world.rds")
+germany = readr::read_rds("../data/maps/gadm36_DEU_1_sf.rds")
+```
+
+
+The affiliation table contains information about where the papers were submitted.
+This table contains `r nrow(aff)` rows. In the below table, the fields are shown.
+
+```{r aff_show_table,results='asis'}
+aff_fields = read_excel("../data/datasetsFields/affiliations.xlsx")
+aff_fields %>% 
+  gt() %>% 
+  tab_header(title = md("**Affiliation** Table Schema")) %>% 
+  tab_source_note(
+        source_note = md("*Description is taken from  [Aminer](https://www.aminer.cn/oag-2-1)*")
+    )
+```
+
+
+```{r aff_country_count}
+aff_country_count = aff %>% 
+  group_by(country,iso3c) %>% 
+  count(name = "Frequency") %>% 
+  arrange(-Frequency) %>% 
+  filter(!is.na(country)&nchar(country)>0) %>% 
+  ungroup()
+```
+
+```{r top10_aff_country_count_table}
+aff_country_count %>% 
+  slice(1:10) %>% 
+  select(-iso3c) %>% 
+  gt() %>% 
+  tab_header(title = md("Top 10 countries with the most academic organizations"))
+```
+
+
+```{r aff_country_count_heatmap,fig.cap = "The distribution of acedemic organizations on the world map."}
+library(mediocrethemes)
+set_mediocre_all()
+
+aff_country_count_heatmap = world %>% left_join(aff_country_count,by = "iso3c")
+ggplot(aff_country_count_heatmap, aes(long, lat)) + 
+	geom_polygon(aes(group=group,fill = Frequency),colour="white",size=0.1) +
+	coord_equal() + 
+  # https://carto.com/carto-colors/
+  scale_fill_gradientn(colours = c("#d3f2a3","#97e196","#6cc08b","#4c9b82","#217a79","#105965","#074050"),
+                       breaks = c(1,5,20,100,500,2000,8000),
+                       trans = "log",na.value = "grey90")+
+  map_theme()
+```
+
+
+```{r aff_location_scatter,fig.cap="Location of academic organization on world map."}
+p = ggplot() +
+  geom_polygon(data  =  world, aes(long, lat,group=group),fill = "transparent",colour="gray",size=0.05) +
+  geom_point(data = subset(aff,!is.na(Longitude) & !is.na(Latitude)),
+                 aes(Longitude, Latitude),size = 0.1,color = "#5B8F22") +
+	coord_equal() +
+	  theme_void()
+ggsave("../transparent.pdf", p,device = "pdf", bg = "transparent")
+p
+```
+
