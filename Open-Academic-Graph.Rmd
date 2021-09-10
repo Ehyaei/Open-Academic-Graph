@@ -5,13 +5,13 @@ author: Ahmad Reza Ehyaei
 titlepage: true
 toc: true
 content-has-page: true
-titlepage-bottom-color: FFFFFF
+titlepage-bottom-color: f6f6f6
 titlepage-text-color: 000000
 page-background-color: f6f6f6
 title-vjust: 40
 author-vjust: -320
 titlepage-author-text-color: 000000
-titlepage-top-background: src/img/top_background.png
+titlepage-top-background: src/img/top_background.eps
 logo-secondary: src/img/RWLogo.eps
 output:
   MPIThemes::latex_report
@@ -22,19 +22,14 @@ output:
 source("manuscript/global.R")
 ```
 
-
 ```{r,child="chapters/introduction.Rmd",eval=FALSE}
 
 ```
 
-
-```{r,child="chapters/affiliations.Rmd",eval=TRUE}
+```{r,child="chapters/affiliations.Rmd",eval=FALSE}
 
 ```
 
+```{r,child="chapters/authors.Rmd",eval=TRUE}
 
-
-```{r remove_margins, include=FALSE,eval=FALSE}
-fig_pathes = list.files("figure/",full.names = T)
-# lapply(fig_pathes, knitr::plot_crop)
 ```

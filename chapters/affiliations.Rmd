@@ -1,9 +1,7 @@
 # Affiliations
 
-```{r read_data}
+```{r aff_read_data}
 aff = readr::read_rds("../data/affiliation.rds")
-world = readr::read_rds("../data/maps/world.rds")
-germany = readr::read_rds("../data/maps/gadm36_DEU_1_sf.rds")
 ```
 
 
@@ -55,21 +53,10 @@ ggplot(aff_country_count_heatmap, aes(long, lat)) +
 ```
 
 
-```{r aff_location_scatter,fig.cap="Location of academic organization on world map."}
-p = ggplot() +
-  geom_polygon(data  =  world, aes(long, lat,group=group),fill = "transparent",colour="gray",size=0.05) +
-  geom_point(data = subset(aff,!is.na(Longitude) & !is.na(Latitude)),
-                 aes(Longitude, Latitude),size = 0.1,color = "#5B8F22") +
-	coord_equal() +
-	  theme_void()
-p
-```
-
-
-```{r add_location_germany_contour_map,fig.cap="The location of academic organizations in Germany."}
+```{r aff_location_germany_contour_map,fig.cap="The location of academic organizations in Germany."}
 aff_DEU = aff %>% filter(country == "Germany")
 ggplot()+
-  geom_hex(data = aff_DEU, aes(x = Longitude, y = Latitude),bins = 10,alpha = 0.5) +
+  geom_hex(data = aff_DEU, aes(x = Longitude, y = Latitude),binwidth = c(1, 0.6),alpha = 0.5) +
   geom_sf(data = germany,fill = "transparent",size = 0.1, color = "gray")+
   scale_fill_gradientn(colours = continuous_color) +
   scale_alpha(range = c(0, 0.5), guide = FALSE)+
@@ -77,3 +64,12 @@ ggplot()+
 ```
 
 
+```{r aff_location_scatter,fig.cap="Location of academic organization on world map."}
+p = ggplot() +
+  geom_polygon(data  =  world, aes(long, lat,group=group),fill = "transparent",colour="gray",size=0.05) +
+  geom_point(data = subset(aff,!is.na(Longitude) & !is.na(Latitude)),
+                 aes(Longitude, Latitude),size = 0.1,color = prettyRed) +
+	coord_equal() +
+	  theme_void()
+p
+```

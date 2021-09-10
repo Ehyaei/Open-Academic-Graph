@@ -1,5 +1,7 @@
 # Open-Academic-Graph
 
+<a href={https://github.com/Ehyaei/Open-Academic-Graph}><img src="src/img/RWLogo.png" alt="Random Walk in Datasets Logo" align="right" width="160" style="padding: 0 15px; float: right;"/>
+
 Open Academic Graph (OAG) is a large knowledge graph unifying
 [Microsoft Academic Graph (MAG)](https://academic.microsoft.com/) and [AMiner](https://aminer.org/).
 Two projects' major purpose is to develop a heterogeneous graph comprising scientific publication records and citation linkages between those articles, as well as authors, institutions, journals, conferences, and fields of study. 
