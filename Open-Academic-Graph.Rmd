@@ -22,11 +22,11 @@ output:
 source("manuscript/global.R")
 ```
 
-```{r,child="chapters/introduction.Rmd",eval=FALSE}
+```{r,child="chapters/introduction.Rmd",eval=TRUE}
 
 ```
 
-```{r,child="chapters/affiliations.Rmd",eval=FALSE}
+```{r,child="chapters/affiliations.Rmd",eval=TRUE}
 
 ```
 
