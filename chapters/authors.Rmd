@@ -1,3 +1,5 @@
+\newpage
+
 # Authors
 
 Fields for author information, academic history, and impact measures are included in the authors' table.
@@ -6,19 +8,11 @@ The fields are listed in the table below.
 
 ```{r aut_show_table,results='asis'}
 aut_fields = read_excel("../data/datasetsFields/authors.xlsx")
-# aut_fields %>% 
-#   gt() %>% 
-#   tab_header(title = md("**Authors** Table Schema")) %>% 
-#   tab_source_note(
-#         source_note = md("*Description is taken from  [Aminer](https://www.aminer.cn/oag-2-1)*")
-#     ) %>% 
-#   cols_width(starts_with("Ex") ~ px(75))
 aut_fields %>% 
   kbl(booktabs = T,caption = "Authors Table Schema") %>% 
   kable_styling(latex_options = c("hold_position", "scale_down"))
 ```
 
-## Citation Overview
 
 ```{r citation_pubs_count}
 citation_pubs_count = read_csv("../data/n_citation_n_pubs_count.csv/part-00000-eb38c2e9-3b79-4c73-8310-58299c029e69-c000.csv")
@@ -32,9 +26,11 @@ citation_pubs_count %>%
   mutate(percent = count/sum(count))-> citation_count
 ```
 
+The quantity of citations is used to quantify the impact of each research paper. The frequency of citations by writers is shown in the table below.
+
 ```{r citation_count_show_table}
 citation_count %>% 
-  head(10) %>% 
+  head(15) %>% 
   gt() %>% 
   fmt_percent(columns = c("percent"), decimals = 1) %>% 
   cols_align(
@@ -49,60 +45,63 @@ citation_count %>%
     tab_header(title = md("The Top 10 Frequency of Total Authors' Citations"))
 
 ```
+As can be seen, the research of many authors has not been used in the work of others.
 
-```{r citation_count_bar_plot,fig.height=4,fig.cap = "The Frequency of Authors by Number of Total Citations"}
+A bar plot of the frequency of citations less than 100 has been displayed to observe the distribution of the number of citations.
+
+```{r citation_count_bar_plot,fig.height=3.5,fig.cap = "The Frequency of Authors by Number of Total Citations"}
 ggplot(subset(citation_count,n_citation>0 & n_citation<100),aes(x = n_citation, y = count))+
-  geom_col(fill = prettyRed,color = "transparent")+
-  theme_scientific()+
+  geom_col()+
   scale_y_continuous(labels = scales::comma)+
   labs(x = " Number of Citations", y = "Number of Authors")
 ```
 
-```{r citation_count_density_plot,fig.height=4,fig.cap = "The Frequency of Authors by Number over Total Citations 100"}
+To show the statistical behavior of writers with total citations of over 100, we used the  logarithmic x-axis, the result of which can be seen below.
+
+```{r citation_count_density_plot,fig.height=3.5,fig.cap = "The Frequency of Authors by Number over Total Citations 100"}
 breaks = c(100,200,500,1000,2000,5000,10000,20000,50000,100000,200000)
 labels = pretty_number(breaks)
 citation_count %>% 
   filter(n_citation>=100) %>%
   arrange(n_citation) %>% 
 ggplot(aes(x = n_citation, y = count))+
-  geom_line(color = prettyRed,fill = "transparent")+
-  theme_scientific()+
+  geom_line()+
   scale_y_continuous(labels = scales::comma,breaks = 5000*(0:10))+
   scale_x_continuous(trans = "log",
                      breaks = breaks,labels = labels)+
-  labs(x = " Number of Citations", y = "Number of Authors")
+  labs(x = " Number of Citations (logarithmic)", y = "Number of Authors")
 ```
 
-
-```{r strange_jump_n_citation,fig.height=4,fig.cap="Strange Jump in Total Citations Density Function"}
-citation_count %>% 
-  filter(n_citation>=2000 & n_citation<3000) %>%
-  arrange(n_citation) %>% 
-ggplot(aes(x = n_citation, y = count))+
-  geom_line(color = prettyRed,fill = "transparent")+
-  theme_scientific()+
-  labs(x = " Number of Citations", y = "Number of Authors")
-
-```
+To see how many people have more than specific value citations, 
+we drew the tail Distribution of citaions. For example, about a 3.6 milion people have more than a 200 citations.
 
 
-
-```{r citation_count_tail_density_plot,fig.height=4,fig.cap="Tail Distribution of Authors over Total Citations 100"}
+```{r citation_count_tail_density_plot,fig.height=3.5,fig.cap="Tail Distribution of Authors over Total Citations 100"}
 citation_count %>% 
   filter(n_citation>=100) %>%
   arrange(-n_citation) %>% 
   mutate(total = cumsum(count)) %>% 
   ggplot(aes(x = n_citation, y = total))+
-    geom_line(color = prettyRed,fill = "transparent")+
-    theme_scientific()+
+    geom_line()+
     scale_y_continuous(breaks = 600000*(0:11),labels = pretty_number(600000*(0:11)))+
     scale_x_continuous(trans = "log",
                      breaks = breaks,labels = labels)+
     labs(x = " Number of Citations", y = "Number of Authors")
 ```
 
-## Number of Publication
+In the overall citation density function, there is an odd leap. A portion of the chart has been chosen for better visibility in the plot below.
 
+```{r strange_jump_n_citation,fig.height=3.5,fig.cap="Strange Jump in Total Citations Density Function"}
+citation_count %>% 
+  filter(n_citation>=2000 & n_citation<3000) %>%
+  arrange(n_citation) %>% 
+ggplot(aes(x = n_citation, y = count))+
+  geom_line()+
+  labs(x = " Number of Citations", y = "Number of Authors")
+
+```
+
+\newpage
 
 ```{r n_pubs_count}
 citation_pubs_count %>% 
@@ -112,9 +111,11 @@ citation_pubs_count %>%
   mutate(percent = count/sum(count))-> n_pubs_count
 ```
 
+The frequency of the number of articles by each author is shown in the table below.
+
 ```{r n_pubs_count_show_table}
 n_pubs_count %>% 
-  head(10) %>% 
+  head(15) %>% 
   gt() %>% 
   fmt_percent(columns = c("percent"), decimals = 1) %>% 
   cols_label(
@@ -122,26 +123,29 @@ n_pubs_count %>%
     count = "Frequency",
     percent = "Percent Share"
   ) %>% 
-    tab_header(title = md("The Top 10 Frequency of Total Number of Authors' Publications.")) %>% 
+    tab_header(title = md("The Top 15 Frequency of Total Number of Authors' Publications.")) %>% 
     cols_align(
     align = "center",
     columns = c("n_pubs")
   )
 ```
 
-```{r n_pubs_count_bar_plot,fig.height=4,fig.cap = "The Frequency of Authors by Number of Total Publications"}
+The following table shows the frequency of the number of writers in relation to the number of articles. It's a logarithmic scale on the vertical axis.
+
+```{r n_pubs_count_bar_plot,fig.height=3.5,fig.cap = "The Frequency of Authors by Number of Total Publications"}
 breaks = c(1,2,5,10,20,50,100,200,500,1000,2000,5000,10000,20000,50000,100000,200000)*1000
 labels = pretty_number(breaks)
 
 ggplot(subset(n_pubs_count,n_pubs>0 & n_pubs<200),aes(x = n_pubs, y = count))+
-  geom_col(fill = prettyRed,color = "transparent")+
-  theme_scientific()+
+  geom_col()+
   scale_y_continuous(breaks = breaks, labels = labels,trans = "log10")+
   coord_cartesian(ylim = c(1000,NA))+
   labs(x = "Number of Publications", y = "Number of Authors")
 ```
 
-```{r,fig.width=8,fig.height=8}
+In the following plot, the statistical behavior of the number of authors can be plotted in terms of the number of articles and the number of citations.
+
+```{r n_citation_n_pubs_heatmap,fig.width=7,fig.height=8}
 breaks = 10^seq(0,10)
 labels = pretty_number(breaks)
 citation_pubs_count %>% 
@@ -154,11 +158,77 @@ citation_pubs_count %>%
   summarise(count = sum(count)) %>% 
   ggplot(aes(x = nc, y = np,fill = count))+
   geom_tile()+
-  scale_fill_gradientn(colours = c("gray90","#116656",prettyRed,"gray20","gray10"),
+  scale_fill_continuous(
+    #colours = c("gray90","#116656",MPIRed,"gray20","gray10"),
                        breaks = breaks,labels = labels,
                        trans = "log10",na.value = "grey90")+
   labs(x = "Number of Citations",y = "Number of Publications")+
-  theme_scientific()+
   bottom_legend()
 ```
+\newpage
+```{r readTagCount}
+tags <- read_csv("../data/tags_count.csv/part-00000-3c00a8ca-bee7-4a19-9a02-7519c75cce2f-c000.csv") %>% 
+  arrange(-count)
+```
+
+In the data, tags are assigned to each article. The following table shows the frequency of article tags.
+
+```{r showTop10Tags}
+tags %>% 
+  head(10) %>% 
+  gt() %>% 
+  cols_label(
+    tags = "Publication's Tags",
+    count = "Frequency"
+  ) %>% 
+    tab_header(title = md("The Top 10 Frequency of Publication's Tags.")) 
+```
+
+The top 100 tags, together with their frequency, are shown in the wordcloud below.
+
+```{r tagsWordCloud,fig.cap="Top 100 Publications's Tag WordCloud"}
+library(ggwordcloud)
+set.seed(42)
+tags %>% slice(1:100) %>% 
+  arrange(count) %>% 
+  mutate(id = ceiling(row_number()^2/20)) %>%
+  arrange(-id) %>% 
+  mutate(
+    angle = 90 * sample(c(0, 1), n(), replace = TRUE, prob = c(60, 40)),
+      color = sample.int(10, n(), replace = TRUE)
+
+    ) %>% 
+  ggplot( aes(label = tags, size = id,angle = angle,color = color)) +
+    geom_text_wordcloud(area_corr = TRUE) +
+    scale_radius(range = c(5, 20))+
+    theme_minimal()+
+    scale_color_gradient(low = colorspace::lighten(MPIRed,0.5), high = MPIRed)
+```
+
+```{r create_top_tags_orgs,eval=FALSE}
+toc = read_csv("../data/tags_org_count.csv/part-00000-138ef538-1de7-4415-a804-73c8e63db218-c000.csv")
+toc %>% group_by(tags) %>% summarise(count = sum(count)) %>% arrange(-count) %>% slice(1:40) -> toptag
+toc %>% group_by(org) %>% summarise(count = sum(count)) %>% arrange(-count) %>% slice(1:40) -> toporg
+toc %>% filter(org%in%toporg$org & tags %in%toptag$tags) -> toptoc
+write_rds(toptoc,"../data/toptoc.rds")
+```
+
+To see which organizations focus on what topics, we selected 20 universities with the highest number of articles and 20 frequent tags.  The percentage of papers submitted for each organization in each subject was then computed and shown in a heatmap.
+
+```{r tag_org_top_heatmatp,fig.width=7,fig.height=7, fig.cap="The percentage of publications by organizations and tags"}
+toptoc = read_rds("../data/toptoc.rds") %>% 
+  group_by(org) %>% 
+  mutate(percent = round(100*count/sum(count),0))
+
+ggplot(toptoc,aes(tags,org,fill  = percent))+
+  geom_tile()+
+  bottom_legend()+
+  labs(x = NULL, y = NULL)+
+  theme(
+    axis.text.x = element_text(size = 5,angle = 45,vjust = 1,hjus = 1),
+    axis.text.y = element_text(size = 5),
+    )
+```
+
+
 

@@ -29,8 +29,11 @@ germany = readr::read_rds("data/maps/gadm36_DEU_1_sf.rds")
 #                        Set colors                        #
 #                                                          #
 ############################################################
-prettyRed = "#ef2f4aff"
-continuous_color = c("#d3f2a3","#97e196","#6cc08b","#4c9b82","#217a79","#105965","#074050")
+set_color_theme()
+MPIRed = MPIThemes::palette_mpi()[1]
+MPIBlue = MPIThemes::palette_mpi()[3]
+MPIYellow = MPIThemes::palette_mpi()[5]
+
 
 ############################################################
 #                                                          #
@@ -80,3 +83,17 @@ bottom_legend = function(){
   )
 }
 
+
+lm_eqn = function(m) {
+  
+  l <- list(a = format(coef(m)[1], digits = 2),
+            b = format(abs(coef(m)[2]), digits = 2),
+            r2 = format(summary(m)$r.squared, digits = 3));
+  
+  if (coef(m)[2] >= 0)  {
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2,l)
+  } else {
+    eq <- substitute(italic(y) == a - b %.% italic(x)*","~~italic(r)^2~"="~r2,l)    
+  }
+  as.character(as.expression(eq));
+}

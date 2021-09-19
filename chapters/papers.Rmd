@@ -1,0 +1,164 @@
+\newpage
+# Papers
+
+The paper table contains information about paper's metadata.
+This table contains 208915369 rows. 
+This is the biggest table in the academic graph datasets.
+In the below table, the fields are shown.
+
+```{r pep_show_table,results='asis'}
+pep_fields = read_excel("../data/datasetsFields/papers.xls")
+pep_fields %>% 
+  kbl(booktabs = T,caption = "Papers Table Schema") %>% 
+  kable_styling(latex_options = c("hold_position", "scale_down"))
+```
+
+Many questions concerning the Microsoft Academic Graph may be posed and searched. To begin, we attempt a statistical explorations of the data in order to obtain a better knowledge of the world of publications.
+We begin with a graph showing the annual publication count through time. The plot is shown below.
+```{r read_year_count}
+year_count = read_csv("../data/year_count.csv/part-00000-fff79c4a-0814-497b-81a9-d6aa7bfd3172-c000.csv") %>% 
+  arrange(-year) %>% 
+  filter(year<2017 & !is.na(year))
+```
+
+```{r yaerly_paper_count,fig.height=3,fig.cap="annual publication count through years"}
+ggplot(year_count,aes(x = year, y = count))+
+  geom_line()+
+  labs(y = "Number of Publications")+
+  scale_y_continuous(labels = scales::comma)
+```
+
+According to the plot, the number of publications has increased exponentially. The graph's vertical axis is scaled logarithmically in base 2 to make this clearer. In addition, the data is fitted using a regression line, and the findings reveal that the data follows an exponential model. The model slope coeficient indicates that every 25 years, the number of publications in the globe doubles.
+
+```{r yaerly_paper_count_log,fig.height=4.5,fig.cap="The behavior of annula publication's logarithmic growth"}
+fit = lm(log(count)~year,data = year_count)
+coef = fit$coefficients
+fitText = paste0("log2(Publication) ~ ",round(coef[2],2),".Year + ",round(coef[1],1),
+                 "\n","R-squared: ",round(summary(fit)$r.squared,2)
+                 )
+library(scales)
+
+ggplot(year_count,aes(x = year, y = count))+
+  geom_smooth(method = "lm",color = MPIBlue,size = 0.8,se = F)+
+  geom_line()+
+  labs(y = "Number of Publications (logarithmic)")+
+  scale_x_continuous(breaks = seq(1800,2000,25))+
+  scale_y_continuous(breaks = 2^(seq(10,24)),
+    labels = trans_format("log2", math_format(2^.x)),
+                     trans = "log2")+
+  annotate(geom = "text",x = 1850, y = 2^22, label = fitText)
+```
+
+```{r lm_fit_summary_outout}
+library(modelsummary)
+options("modelsummary_format_numeric_latex" = "plain")
+modelsummary(list(" " = fit), stars = TRUE,
+             output = "latex",
+              gof_omit = 'F|Log.Lik.|AIC|BIC',
+             title = 'Summary of Liear Model Log(Pubs) by Year.'
+             )
+```
+
+When you look at the annual poblicatios, you see two sudden drops. The coincidence of this event with the world wars shows the effect of war on the decline of science.
+
+```{r publication_during_war, fig.cap="The effect of war on the growth of science"}
+ggplot(subset(year_count,year>1900 & year<1950),aes(x = year, y = count))+
+  annotate("rect",xmin = 1914, xmax = 1918, ymin = -Inf, ymax = Inf,  fill = MPIBlue, alpha=.5, color = "transparent")+
+  annotate("rect",xmin = 1939, xmax = 1945, ymin = -Inf, ymax = Inf,  fill = MPIBlue, alpha=.5, color = "transparent")+
+  annotate(geom = "text",x = 1916, y = 200000, label = "WW I")+
+  annotate(geom = "text",x = 1942, y = 200000, label = "WW II")+
+  geom_line()+
+  labs(y = "Number of Publications")+
+  scale_y_continuous(labels = scales::comma)
+```
+
+In the below table, we can view publications according to the type of document.
+
+```{r doc_count_table}
+doc_count = read_csv("../data/doc_type_count.csv/part-00000-b3966334-96b3-4a4a-ad92-88e1425f5d9c-c000.csv")
+doc_count %>% 
+  arrange(-count) %>% 
+ gt() %>% 
+  cols_label(doc_type = "Type", count = "Count") %>%
+  summary_rows(columns = "count", fns = list(Total = ~sum(.)), formatter = fmt_integer) %>%
+  fmt_missing(columns = contains("doc_type"), missing_text = "") %>% 
+  fmt_integer(columns = "count") %>% 
+  tab_header(title = md("Document Frequency"))
+```
+
+As you can see, there are a lot of publications that aren't labeled.
+
+```{r read_year_doc_type_n_citation_count }
+ydcc  <- read_csv("../data/year_doc_type_n_citation_count.csv/part-00000-4cdd5630-37d3-4ef9-a0ea-388c170b1bf1-c000.csv") %>% 
+  filter(year<2017 & !is.na(year))
+ydc <- ydcc %>% group_by(year, doc_type) %>% 
+  summarise(count = sum(count), citation = sum(n_citation)) %>% 
+  mutate(impact = round(citation/count,1)) %>% 
+  mutate(doc_type = ifelse(is.na(doc_type),"Unknown",doc_type))
+```
+
+The yearly number of publications is shown by document type in the graph below to illustrate the growth trend in further depth over the last fifty years (1967-2017).
+
+```{r yearly_doc_type_count1,fig.height=7.5,fig.cap="Annual publication number by document type"}
+ggplot(subset(ydc, year>1967 & year<2018), aes(x = year, y = count))+
+  geom_line()+
+  labs(y = "Number of Publications")+
+  labs(x = NULL, y = NULL)+
+  scale_y_continuous(labels = scales::comma)+
+  facet_wrap(doc_type~.,scales = "free",nrow = 3)
+```
+
+The conference publications appear to follow a slightly different pattern than the others.
+
+The annual total number of citations was divided by the total number of articles to arrive at the impact factor. For each document, an annual chart was plotted to assess the effect of the published works.
+
+```{r yearly_doc_type_impact,fig.height=7.5,fig.cap="Annual publication impact by document type"}
+ggplot(subset(ydc, year>1967 & year<2018), aes(x = year, y = impact))+
+  geom_line()+
+  labs(y = "Number of Publications")+
+  scale_y_continuous(labels = scales::comma)+
+  facet_wrap(doc_type~.,scales = "free",nrow = 3)
+```
+
+As can be observed, all types of documentation have a decreasing impact factor.
+
+```{r}
+ydcac <- read_csv("../data/year_doc_type_n_citation_author_number_count.csv/part-00000-50ab1ec6-1c61-42a2-9836-adfa981ee4b9-c000.csv")
+author_number_count <- ydcac %>% group_by(author_number) %>% summarise(count = sum(count)) %>% 
+  filter(author_number>0) %>% 
+   mutate(percent = count/sum(count))
+
+author_year_count <- ydcac %>% group_by(author_number,year) %>% 
+  summarise(count = sum(count)) %>% 
+  filter(author_number>0) %>% 
+  group_by(year) %>% 
+  mutate(percent = count/sum(count))
+```
+
+Another aspect of the data we looked into was the number of writers for each publication.
+The percentage of publications per number of writers is displayed in the bar plot below.
+ 
+```{r author_number_count_bar,fig.height=3,fig.cap="The percentage of the number of writers for publications"}
+author_number_count %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = author_number,y = percent))+
+  geom_col()+
+  labs(y = "Percentage", x = "Number of Writers")+
+  scale_y_continuous(labels = scales::percent)+
+  scale_x_continuous(labels = scales::pretty_breaks())
+```
+ 
+Researchers' willingness to collaborate has risen in recent years. To observe this statement in the data, we first compute the percentage of publications per year in terms of the number of writers, and then we build a heatmap of it.
+
+```{r author_year_count_heatmap, fig.height=4,fig.cap="Anual number of writers heatmap"}
+library(colorspace)
+author_year_count %>% 
+  filter(author_number<21,year>1900,year<2017) %>% 
+  ggplot(aes(x = year,y = author_number,fill = percent))+
+  geom_tile()+
+  labs(x = NULL, y = "Number of Writers")+
+  scale_fill_continuous(trans = "sqrt",labels = scales::percent)+
+  bottom_legend()
+```
+ 
+ 

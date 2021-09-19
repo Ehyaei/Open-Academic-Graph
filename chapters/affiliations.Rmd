@@ -1,3 +1,5 @@
+\newpage
+
 # Affiliations
 
 ```{r aff_read_data}
@@ -11,13 +13,9 @@ This table contains `r nrow(aff)` rows. In the below table, the fields are shown
 ```{r aff_show_table,results='asis'}
 aff_fields = read_excel("../data/datasetsFields/affiliations.xlsx")
 aff_fields %>% 
-  gt() %>% 
-  tab_header(title = md("**Affiliation** Table Schema")) %>% 
-  tab_source_note(
-        source_note = md("*Description is taken from  [Aminer](https://www.aminer.cn/oag-2-1)*")
-    )
+  kbl(booktabs = T,caption = "Affiliation Table Schema") %>% 
+  kable_styling(latex_options = c("hold_position", "scale_down"))
 ```
-
 
 ```{r aff_country_count}
 aff_country_count = aff %>% 
@@ -28,6 +26,21 @@ aff_country_count = aff %>%
   ungroup()
 ```
 
+To see the countries that are active in the field of research, we counted the number of research centers in each country. The heatmap below depicts the geographic distribution of research centers.
+
+```{r aff_country_count_heatmap,fig.height=5,fig.cap = "The distribution of acedemic organizations on the world map."}
+aff_country_count_heatmap = world %>% left_join(aff_country_count,by = "iso3c")
+ggplot(aff_country_count_heatmap, aes(long, lat)) + 
+	geom_polygon(aes(group=group,fill = Frequency),colour="white",size=0.1) +
+	coord_equal() + 
+  scale_fill_continuous(breaks = c(1,5,20,100,500,2000,8000),
+                       trans = "log",na.value = "grey90")+
+  theme_map()
+```
+
+\newpage
+For more details, the table below shows the top ten countries with the most research centers.
+
 ```{r top10_aff_country_count_table}
 aff_country_count %>% 
   slice(1:10) %>% 
@@ -36,40 +49,101 @@ aff_country_count %>%
   tab_header(title = md("Top 10 countries with the most academic organizations"))
 ```
 
+The distribution of German research centers is displayed as a thermal diagram for further information.
 
-```{r aff_country_count_heatmap,fig.cap = "The distribution of acedemic organizations on the world map."}
-library(mediocrethemes)
-set_mediocre_all()
-
-aff_country_count_heatmap = world %>% left_join(aff_country_count,by = "iso3c")
-ggplot(aff_country_count_heatmap, aes(long, lat)) + 
-	geom_polygon(aes(group=group,fill = Frequency),colour="white",size=0.1) +
-	coord_equal() + 
-  # https://carto.com/carto-colors/
-  scale_fill_gradientn(colours = continuous_color,
-                       breaks = c(1,5,20,100,500,2000,8000),
-                       trans = "log",na.value = "grey90")+
-  map_theme()
-```
-
-
-```{r aff_location_germany_contour_map,fig.cap="The location of academic organizations in Germany."}
+```{r aff_location_germany_contour_map,fig.height=4, fig.cap="The location of academic organizations in Germany."}
 aff_DEU = aff %>% filter(country == "Germany")
 ggplot()+
-  geom_hex(data = aff_DEU, aes(x = Longitude, y = Latitude),binwidth = c(1, 0.6),alpha = 0.5) +
+  geom_hex(data = aff_DEU, aes(x = Longitude, y = Latitude),binwidth = c(1, 0.6),alpha = 0.8) +
   geom_sf(data = germany,fill = "transparent",size = 0.1, color = "gray")+
-  scale_fill_gradientn(colours = continuous_color) +
   scale_alpha(range = c(0, 0.5), guide = FALSE)+
-  map_theme()
+  theme_map()
 ```
 
+Each point on the chart reflects a research center's location. 
+Each center's exact position on the map is depicted in the scatter plot below.
 
 ```{r aff_location_scatter,fig.cap="Location of academic organization on world map."}
-p = ggplot() +
+ggplot() +
   geom_polygon(data  =  world, aes(long, lat,group=group),fill = "transparent",colour="gray",size=0.05) +
   geom_point(data = subset(aff,!is.na(Longitude) & !is.na(Latitude)),
-                 aes(Longitude, Latitude),size = 0.1,color = prettyRed) +
+                 aes(Longitude, Latitude),size = 0.1) +
 	coord_equal() +
 	  theme_void()
-p
 ```
+
+
+```{r}
+pcoc <- read_csv("../data/pubs_citation_org_count.csv/part-00000-52e82ea0-cd12-4643-98d9-2d880d4b365a-c000.csv") %>%     mutate(impact = round(total_citation/total_pubs,1)) %>% 
+  left_join(aff %>% select(-NormalizedName, -WikiPage, -id, -url),by = c("org" = "DisplayName")) 
+```
+
+The total number of publications, total number of citations, and the impact factor for each institution were computed to determine the active research centers. The top 15 centers with the most publications are shown in the table below.
+
+```{r top15n_publicationTable}
+tableNames = c("Organization","Number of Publication","Number of Citation","Impact Factor")
+pcoc %>% 
+  arrange(-total_pubs) %>% 
+  slice(1:15) %>% 
+  select(org, total_pubs,total_citation, impact) %>% 
+  setNames(tableNames) %>% 
+  gt() %>% 
+  tab_header(title = md("The Top 15 Organizations with the Most Publications."))
+```
+\newpage
+Also included were the top research centers in terms of citations as well as the top research centers with the greatest impact factors.
+
+```{r top15total_citationTable}
+pcoc %>% 
+  arrange(-total_citation) %>% 
+  slice(1:15) %>% 
+  select(org, total_pubs, total_citation, impact) %>% 
+  setNames(tableNames) %>% 
+  gt() %>% 
+  tab_header(title = md("The Top 15 Organizations with the Most Citations."))
+```
+
+
+```{r top15impact}
+pcoc %>% 
+  filter(total_pubs>1000) %>% 
+  arrange(-impact) %>% 
+  slice(1:15) %>% 
+  select(org, total_pubs, total_citation, impact) %>% 
+  setNames(tableNames) %>% 
+  gt() %>% 
+  tab_header(title = md("The Top 15 Organizations with the Most Impacats and Over 1000 Publcations."))
+```
+
+To see the statistical distribution of the impact factor of research centers, histogram it is plotted.
+
+```{r impact_histogram,fig.height=4,fig.cap="Histogram of Organization Imacts Less than 100 With a Binwidth of 0.5."}
+ggplot(pcoc,aes(impact))+
+  geom_histogram(fill = MPIRed,binwidth = 0.5)+
+  scale_x_continuous(breaks = seq(0,100,10),limits = c(0,100))
+```
+
+
+```{r country_pubs_stat_data}
+average_country_impact <- pcoc %>% 
+  group_by(iso3c) %>% 
+  summarise(
+    average_impacts = sum(total_citation)/sum(total_pubs),
+    total_pubs = sum(total_pubs),
+    total_citation = sum(total_citation)
+    )
+average_country_impact_heatmap = world %>% 
+  left_join(average_country_impact,by = "iso3c")
+```
+
+It is also possible to determine the degree of scientific impact for each country and display it on the globe as a heatmap.
+
+```{r impact_country_count_heatmap,fig.cap = "The distribution of acedemic organizations Impacts."}
+ggplot(average_country_impact_heatmap, aes(long, lat)) + 
+	geom_polygon(aes(group=group,fill = average_impacts),colour="white",size=0.1) +
+	coord_equal() + 
+  scale_fill_continuous(na.value = "grey90")+
+  labs(fill = "Average Impacts")+
+  theme_map()
+```
+
