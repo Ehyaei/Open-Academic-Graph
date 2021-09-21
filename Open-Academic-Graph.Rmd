@@ -5,14 +5,13 @@ author: Ahmad Reza Ehyaei
 titlepage: true
 toc: true
 content-has-page: true
-titlepage-bottom-color: f6f6f6
 titlepage-text-color: 000000
 page-background-color: f6f6f6
 titlepage-twocolor-rule-height: 0
 title-vjust: 40
 author-vjust: -320
 titlepage-author-text-color: 000000
-titlepage-top-background: src/img/top_background.eps
+titlepage-background: src/img/top_background.eps
 logo-secondary: src/img/RWLogo.eps
 header-includes:
    - \usepackage{float}
